@@ -1,6 +1,7 @@
 //Inquirer is required through questions.js
 
 const questions = require('questions.js');
+const sqlQueries = require('sql_queries');
 const db = require('connection');
 
 //selectedDepartment object: deptName, deptID properties
@@ -35,22 +36,8 @@ const selectedManager = {
 
 //[MAIN_MENU]       Initial query to start tree: View Depts, Add Dept, View Roles, Add Role, View Emp, Add Emp, Update Emp, Exit
 async function mainMenu() {
-    menu = await inquirer.prompt({
-        name: 'root',
-        message: 'Choose what to view:',
-        type: 'list',
-        options: [
-            'View Departments',
-            'View Roles',
-            'View Employees',
-            'Add Department',
-            'Add Role',
-            'Add Employee',
-            'Update Employee',
-            'Exit'
-        ]
-    });
-    switch (menu.root) {
+    const { root } = await questions.mainMenu();
+    switch (root) {
         case 'View Departments':
             viewDepts(true);
             break;
@@ -115,11 +102,8 @@ async function viewEmps(returnToMain) {
 //  Potential later addition: Generate random 3-digit deptID and show, rather than incremental IDs
 
 async function addDept(returnToMain) {
-    const deptData = await inquirer.prompt({
-        name: 'deptName',
-        message: 'Input name for new department',
-        type: 'input'
-    })
+    const { departmentName } = await questions.newItemName('department');
+    
 
 }
 
