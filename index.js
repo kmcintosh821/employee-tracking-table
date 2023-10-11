@@ -2,7 +2,6 @@
 
 const questions = require('questions.js');
 const sqlQueries = require('sql_queries');
-const db = require('connection');
 
 //selectedDepartment object: deptName, deptID properties
 const selectedDepartment = {
@@ -120,13 +119,7 @@ async function addDept(returnToMain) {
 
 async function addRole(returnToMain) {
 
-    const deptList = db.connect((err) => {
-        if (err) throw err;
-        db.query("SELECT dept_id, dept_name FROM departments", (err, result) => {
-          if (err) throw err;
-          return result;
-        });
-      });
+
 
     const roleData = await inquirer.prompt({
         name: 'deptName',
