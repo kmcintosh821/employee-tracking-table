@@ -69,13 +69,16 @@ async function mainMenu() {
 //  Options [ADD_DEPT], [MAIN_MENU]
 
 async function viewDepts(returnToMain) {
-    const deptTable = await sqlQueries.queries().getTable('departments');
-    console.log(deptTable);
-    let deptOptions = inquirerPrompts.questions().departmentOptions();
-    // if (deptOptions = 'Add Department')
-    //         addDept(true);
-    // else mainMenu();
-    
+    console.log('Viewing departments.')
+    const table = await sqlQueries.queries().getTable('departments');
+    console.log(table);
+    const { deptOptions } = await inquirerPrompts.questions().departmentOptions();
+    switch (deptOptions) {
+        case 'Add Department':
+            addDept(true);
+        case 'Back':
+            mainMenu();
+        }
 };
 
 //-----------------

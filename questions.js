@@ -20,34 +20,39 @@ questions = () => {
                     'Exit'
                 ]
             }];
-            return inquirer.prompt(question)
+            return inquirer.prompt(question);
         },
         // List of choices to display upon viewing department table
         departmentOptions: () => {
             const question = [{
                 name: 'deptOptions',
+                message: 'Options:',
                 type: 'list',
                 choices: [
                     'Add Department',
                     'Back'
                 ]
             }];
+            return inquirer.prompt(question);
         },
         // List of choices to display upon viewing role table
         roleOptions: () => {
             const question = [{
                 name: 'roleOptions',
+                message: 'Options:',
                 type: 'list',
                 choices: [
                     'Add Role',
                     'Back'
                 ]
             }];
+            return inquirer.prompt(question);
         },
         // List of choices to display upon viewing employee table
         empOptions: () => {
             const question = [{
                 name: 'empOptions',
+                message: 'Options:',
                 type: 'list',
                 choices: [
                     'Add Employee',
@@ -55,6 +60,7 @@ questions = () => {
                     'Back'
                 ]
             }];
+            return inquirer.prompt(question);
         },
         // Add item (parameter is a string of either 'department', 'role', or 'employee')
         newItemName: (item) => {
@@ -75,7 +81,7 @@ questions = () => {
                     type: 'list',
                     choices: deptList
                 }];
-                return inquirer.prompt(question)
+                return inquirer.prompt(question);
             },
             chooseSalary: () => {
                 const question = [{
@@ -83,7 +89,7 @@ questions = () => {
                     message: 'Input a salary for this role.',
                     type: 'input'
                 }];
-                return inquirer.prompt(question)
+                return inquirer.prompt(question);
             }
         },
 
@@ -96,7 +102,7 @@ questions = () => {
                     type: 'list',
                     choices: deptList
                 }];
-                return inquirer.prompt(question)
+                return inquirer.prompt(question);
             },
             assignRole: (roleList) => {
                 const question = [{
@@ -105,14 +111,15 @@ questions = () => {
                     type: 'list',
                     choices: roleList
                 }];
-                return inquirer.prompt(question)
+                return inquirer.prompt(question);
             },
             assignManager: () => {
                 const question = [{
                     name: 'assignedManager',
                     message: "Input last name or employee ID of this employee's direct manager.",
                     type: input
-                }]
+                }];
+                return inquirer.prompt(question);
             }
         },
 
@@ -127,8 +134,8 @@ questions = () => {
                         'Retry',
                         'Cancel'
                     ]
-                }]
-                return inquirer.prompt(question)
+                }];
+                return inquirer.prompt(question);
             },
 
             retryOrUpdate: (item) => {
@@ -141,8 +148,8 @@ questions = () => {
                         'Update',
                         'Cancel'
                     ]
-                }]
-                return inquirer.prompt(question)
+                }];
+                return inquirer.prompt(question);
             },
 
             chooseEmployeeOrMakeNew: (name, possibleChoices) => {
@@ -155,7 +162,7 @@ questions = () => {
                         'New',
                         'Cancel'
                     ]
-                }]
+                }];
                 return inquirer.prompt(question)
             }
         }

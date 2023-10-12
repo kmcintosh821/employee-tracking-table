@@ -5,13 +5,13 @@ queries = () => {
     return {
         // Retrieves entirety of the designated table
         getTable: (input) => {
-            const table = db.connect((err) => {
+            db.connect((err) => {
                 if (err) throw err;
                 db.query(`SELECT * FROM ${input};`, (err, result) => {
                   if (err) throw err;
                   return result;
                 });
-              });
+            });
         },
         
         // Retrieves all of a particular property for the designated table, as well as associated ID
