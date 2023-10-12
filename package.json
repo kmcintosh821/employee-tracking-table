@@ -1,6 +1,8 @@
 {
   "dependencies": {
     "inquirer": "^8.2.4",
-    "mysql2": "^3.6.1"
+    "mysql2": "^3.6.1",
+    "node": "^20.7.0",
+    "sequelize": "^6.33.0"
   }
 }

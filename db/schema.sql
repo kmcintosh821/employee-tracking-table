@@ -30,4 +30,5 @@ INSERT INTO departments (dept_name) VALUES
 
 INSERT INTO roles (job_title, role_dept, salary) VALUES ("CEO", "Upper Management", 1000000);
 
-INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("Smith", "John", "CEO", 1, "Smith");
+INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("Dugnutt", "Bobson", "CEO", 1, "Dugnutt");
+INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("McDichael", "Sleve", "Assistant", 1, "Dugnutt");

@@ -1,7 +1,7 @@
 //Inquirer is required through questions.js
 
-const questions = require('questions.js');
-const sqlQueries = require('sql_queries');
+const inquirerPrompts = require('./questions.js');
+const sqlQueries = require('./sql_queries.js');
 
 //selectedDepartment object: deptName, deptID properties
 const selectedDepartment = {
@@ -35,7 +35,7 @@ const selectedManager = {
 
 //[MAIN_MENU]       Initial query to start tree: View Depts, Add Dept, View Roles, Add Role, View Emp, Add Emp, Update Emp, Exit
 async function mainMenu() {
-    const { root } = await questions.mainMenu();
+    const { root } = await inquirerPrompts.questions().menuRoot();
     switch (root) {
         case 'View Departments':
             viewDepts(true);
@@ -59,8 +59,8 @@ async function mainMenu() {
             updateEmp(true);
         default:
             exitMenu();
-    }
-}
+    };
+};
 
 //-----------------
 
@@ -69,8 +69,14 @@ async function mainMenu() {
 //  Options [ADD_DEPT], [MAIN_MENU]
 
 async function viewDepts(returnToMain) {
-
-}
+    const deptTable = await sqlQueries.queries().getTable('departments');
+    console.log(deptTable);
+    let deptOptions = inquirerPrompts.questions().departmentOptions();
+    // if (deptOptions = 'Add Department')
+    //         addDept(true);
+    // else mainMenu();
+    
+};
 
 //-----------------
 
@@ -79,8 +85,15 @@ async function viewDepts(returnToMain) {
 //  Options [ADD_ROLE], [MAIN_MENU]
 
 async function viewRoles(returnToMain) {
-
-}
+    sqlQueries.queries().getTable('roles');
+    let roleOptions = await inquirerPrompts.questions().roleOptions();
+    switch (roleOptions) {
+        case 'Add Role':
+            addRole(true);
+        default:
+            mainMenu();
+    };
+};
 
 //-----------------
 
@@ -89,7 +102,16 @@ async function viewRoles(returnToMain) {
 //  Options [ADD_EMP], [UPDATE_EMP], [MAIN_MENU]
 
 async function viewEmps(returnToMain) {
-
+    sqlQueries.queries().getTable('employees');
+    const { empOptions } = await inquirerPrompts.questions().empOptions();
+    switch (empOptions) {
+        case 'Add Employee':
+            addEmp(true);
+        case 'Update Employee':
+            updateEmp(true);
+        default:
+            mainMenu();
+    };
 }
 
 //-----------------
@@ -101,9 +123,14 @@ async function viewEmps(returnToMain) {
 //  Potential later addition: Generate random 3-digit deptID and show, rather than incremental IDs
 
 async function addDept(returnToMain) {
-    const { departmentName } = await questions.newItemName('department');
-    
-
+    const { newDept } = await inquirerPrompts.questions().newItemName('department');
+    const deptCheck = await sqlQueries.queries().checkNewDept(newDept.name);
+    if (!deptCheck) {
+        const { retry } = await questions.alreadyExistsError.onlyRetry('department');
+        if (retry.retryAnswer === 'Retry') {
+            addDept(true);
+        } else viewDepts(true);
+    } else sqlQueries.queries().writeNewDept(newDept.name)
 }
 
 //-----------------
@@ -118,45 +145,14 @@ async function addDept(returnToMain) {
 //  Potential later addition: Generate random 4-digit roleID and show, rather than incremental IDs
 
 async function addRole(returnToMain) {
-
-
-
-    const roleData = await inquirer.prompt({
-        name: 'deptName',
-        message: 'Choose department for new role',
-        type: 'list',
-        choices: deptList
-    },
-    {
-        name: 'jobTitle',
-        message: 'Input name for new role',
-        type: 'input'
-    });
-
-    const roleNameCheck = await db.connect((err) => {
-        if (err) throw err;
-        db.query(`SELECT * FROM roles WHERE jobTitle = ${roleData.jobTitle}`, (err, result) => {
-            if (err) throw err;
-            if (result)
-                return true;
-        });
-    });
-
-    if (roleNameCheck === true) {
-        const roleRetry = inquirer.prompt({
-            name: 'retryPrompt',
-            message: 'Role with same name already exists in database. Retry?',
-            type: 'confirm'
-
-        }).then((response) => {
-            if (response)
-                addRole(returnToMain);
-            else mainMenu();
-        })
-    }
-
-    const roleSalary = await 
-
+    const { newRole } = await questions.newItemName('role');
+    const roleCheck = await sqlQueries.queries().checkNewDept(newRole.name);
+    if (!roleCheck) {
+        const { retry } = await questions.alreadyExistsError.onlyRetry('role');
+        if (retry.retryAnswer === 'Retry') {
+            addRole(true);
+        } else viewRoles(true);
+    } else sqlQueries.queries().writeNewRole(newRole.name)
 }
 
 //-----------------
@@ -175,7 +171,14 @@ async function addRole(returnToMain) {
 //  Potential later addition: Generate random 6-digit empID and show, rather than incremental ID
 
 async function addEmp(returnToMain) {
-
+    const { newRole } = await questions.newItemName('role');
+    const roleCheck = await sqlQueries.queries().checkNewDept(newRole.name);
+    if (!roleCheck) {
+        const { retry } = await questions.alreadyExistsError.onlyRetry('role');
+        if (retry.retryAnswer === 'Retry') {
+            addRole(true);
+        } else viewRoles(true);
+    } else sqlQueries.queries().writeNewRole(newRole.name)
 }
 
 //-----------------
@@ -188,7 +191,7 @@ async function addEmp(returnToMain) {
 //  Prompt what to update (Role/Manager/Cancel)
 
 async function updateEmp(returnToMain) {
-
+    mainMenu()
 }
 
 //-----------------
@@ -200,7 +203,7 @@ async function updateEmp(returnToMain) {
 //  Prompt what to update (Role/Manager/Cancel)
 
 async function updateEmpRole(empID) {
-
+    mainMenu()
 }
 
 //-----------------
@@ -211,7 +214,7 @@ async function updateEmpRole(empID) {
 //  Confirm manager name and empID (Retry [GOTO: UPDATE_MANAGER_INPUT]/Cancel) [TARGET: UPDATE_EMP_CONF]
 
 async function updateManager(empID) {
-
+    mainMenu()
 }
 
-module.exports = index;
+mainMenu();
