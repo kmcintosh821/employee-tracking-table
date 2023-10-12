@@ -73,24 +73,41 @@ function checkEmployeeFullName(last, first) {
 //------------
 // Write new department to database
 function writeNewDept(input) {
-    const table = db.connect((err) => {})
+    const table = db.connect((err) => {
+        if (err) throw err;
+        db.query(`INSERT INTO departments (dept_name) VALUES ${input}`);
+        console.log('Added', input, 'to departments')
+    })
 
 };
 
 //------------
 // Write new role to database
-function writeNewRole(input) {
+function writeNewRole(job_title, role_dept, salary) {
+    const table = db.connect((err) => {
+        if (err) throw err;
+        db.query(`INSERT INTO roles (job_title, role_dept, salary) VALUES ${job_title}, ${role_dept}, ${salary}`);
+        console.log('Added', job_title, 'to roles')
+    })
 
 };
 
 //------------
 // Write new employee to database
-function writeNewEmployee(input) {
-
+function writeNewEmployee(last_name, first_name, employee_role, manager_id, manager_name) {
+    const table = db.connect((err) => {
+        if (err) throw err;
+        db.query(`INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ${last_name}, ${first_name}, ${employee_role}, ${manager_id}, ${manager_name}`)
+    })
+    console.log('Added', first_name, last_name, 'to employees');
 };
 
 //------------
 // Write updated employee to database
-function writeEmployeeUpdate(input) {
-
+function writeEmployeeUpdate(id, newRole, managerId) {
+    const table = db.connect((err) => {
+        if (err) throw err;
+        db.query(`UPDATE employees SET employee_role = ${newRole}, manager_id = ${managerId}, WHERE id = ${id};`)
+    })
+    console.log('Updated employee', id, 'role to', newRole, 'and manager to', managerId)
 };
