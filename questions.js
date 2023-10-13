@@ -7,7 +7,7 @@ questions = () => {
         menuRoot: () => {
             const question = [{
                 name: 'root',
-                message: 'Choose what to view:',
+                message: 'Choose an action:',
                 type: 'list',
                 choices: [
                     'View Departments',
@@ -62,6 +62,30 @@ questions = () => {
             }];
             return inquirer.prompt(question);
         },
+        // List of choices to display upon selecting to update an employee
+        updateTarget: () => {
+            const question = [{
+                name: 'name',
+                message: ('Input last name or ID of employee to update.'),
+                type: 'input'
+            }];
+            return inquirer.prompt(question);
+        },
+
+        // List of choices to display upon selecting to update an employee and affirming name
+        updateOptions: () => {
+            const question = [{
+                name: 'updateOptions',
+                message: 'What is getting updated?',
+                type: 'list',
+                choices: [
+                    'Reassign Role',
+                    'Change Manager',
+                    'Back'
+                ]
+            }];
+            return inquirer.prompt(question);
+        },
         // Add item (parameter is a string of either 'department', 'role', or 'employee')
         newItemName: (item) => {
             const question = [{
@@ -76,7 +100,7 @@ questions = () => {
         newRole: {
             chooseDept: (deptList) => {
                 const question = [{
-                    name: 'chosenDept',
+                    name: 'dept',
                     message: 'Choose department for new role.',
                     type: 'list',
                     choices: deptList
@@ -95,6 +119,22 @@ questions = () => {
 
         //Add Employee specific questions
         newEmp: {
+            lastName: () => {
+                const question = [{
+                    name: 'lastName',
+                    message: "Input the employee's last name.",
+                    type: 'input'
+                }];
+                return inquirer.prompt(question);
+            },
+            firstName: () => {
+                const question = [{
+                    name: 'firstName',
+                    message: "Input the employee's first name.",
+                    type: 'input'
+                }];
+                return inquirer.prompt(question);
+            },
             assignToDept: (deptList) => {
                 const question = [{
                     name: 'assignedDept',
@@ -117,7 +157,7 @@ questions = () => {
                 const question = [{
                     name: 'assignedManager',
                     message: "Input last name or employee ID of this employee's direct manager.",
-                    type: input
+                    type: 'input'
                 }];
                 return inquirer.prompt(question);
             }

@@ -1,6 +1,6 @@
 //Inquirer is required through questions.js
 
-const inquirerPrompts = require('./questions.js');
+const inquirerPrompts = require('./questions.js').questions();
 const sqlQueries = require('./sql_queries.js');
 
 //selectedDepartment object: deptName, deptID properties
@@ -35,16 +35,16 @@ const selectedManager = {
 
 //[MAIN_MENU]       Initial query to start tree: View Depts, Add Dept, View Roles, Add Role, View Emp, Add Emp, Update Emp, Exit
 async function mainMenu() {
-    const { root } = await inquirerPrompts.questions().menuRoot();
+    let { root } = await inquirerPrompts.menuRoot();
     switch (root) {
         case 'View Departments':
-            viewDepts(true);
+            viewDepts();
             break;
         case 'View Roles':
-            viewRoles(true);
+            viewRoles();
             break;
         case 'View Employees':
-            viewEmps(true);
+            viewEmps();
             break;
         case 'Add Department':
             addDept(true);
@@ -57,8 +57,10 @@ async function mainMenu() {
             break;
         case 'Update Employee':
             updateEmp(true);
-        default:
+            break;
+        case 'Exit':
             exitMenu();
+            break;
     };
 };
 
@@ -68,17 +70,18 @@ async function mainMenu() {
 //  Show table with department names and IDs
 //  Options [ADD_DEPT], [MAIN_MENU]
 
-async function viewDepts(returnToMain) {
+async function viewDepts() {
     console.log('Viewing departments.')
-    const table = await sqlQueries.queries().getTable('departments');
-    console.log(table);
-    const { deptOptions } = await inquirerPrompts.questions().departmentOptions();
+    // TODO: use sequelize to retrieve and display dept table
+    const { deptOptions } = await inquirerPrompts.departmentOptions();
     switch (deptOptions) {
         case 'Add Department':
             addDept(true);
+            break;
         case 'Back':
             mainMenu();
-        }
+            break;
+    };
 };
 
 //-----------------
@@ -87,14 +90,17 @@ async function viewDepts(returnToMain) {
 //  Show table with job titles, role IDs, associated department, and role salary
 //  Options [ADD_ROLE], [MAIN_MENU]
 
-async function viewRoles(returnToMain) {
-    sqlQueries.queries().getTable('roles');
-    let roleOptions = await inquirerPrompts.questions().roleOptions();
+async function viewRoles() {
+    console.log('Viewing roles.')
+    // TODO: use sequelize to retrieve and display role table
+    const { roleOptions } = await inquirerPrompts.roleOptions();
     switch (roleOptions) {
         case 'Add Role':
             addRole(true);
-        default:
+            break;
+        case 'Back':
             mainMenu();
+            break;
     };
 };
 
@@ -104,16 +110,19 @@ async function viewRoles(returnToMain) {
 //  Show table with employee ids, first names, last names, job titles, departments, salaries, and direct managers
 //  Options [ADD_EMP], [UPDATE_EMP], [MAIN_MENU]
 
-async function viewEmps(returnToMain) {
-    sqlQueries.queries().getTable('employees');
-    const { empOptions } = await inquirerPrompts.questions().empOptions();
+async function viewEmps() {
+    // sqlQueries.queries().getTable('employees');
+    const { empOptions } = await inquirerPrompts.empOptions();
     switch (empOptions) {
         case 'Add Employee':
             addEmp(true);
+            break;
         case 'Update Employee':
             updateEmp(true);
+            break;
         default:
             mainMenu();
+            break;
     };
 }
 
@@ -126,14 +135,13 @@ async function viewEmps(returnToMain) {
 //  Potential later addition: Generate random 3-digit deptID and show, rather than incremental IDs
 
 async function addDept(returnToMain) {
-    const { newDept } = await inquirerPrompts.questions().newItemName('department');
-    const deptCheck = await sqlQueries.queries().checkNewDept(newDept.name);
-    if (!deptCheck) {
-        const { retry } = await questions.alreadyExistsError.onlyRetry('department');
-        if (retry.retryAnswer === 'Retry') {
-            addDept(true);
-        } else viewDepts(true);
-    } else sqlQueries.queries().writeNewDept(newDept.name)
+    const newDept= await inquirerPrompts.newItemName('department');
+    console.log('');
+    console.log('Added', newDept.name, 'to Departments!');
+    console.log('');
+    //TODO: Sequelize check to avoid duplicates
+    //TODO: Sequelize writes new data to dept table
+    if (returnToMain) mainMenu();
 }
 
 //-----------------
@@ -148,14 +156,21 @@ async function addDept(returnToMain) {
 //  Potential later addition: Generate random 4-digit roleID and show, rather than incremental IDs
 
 async function addRole(returnToMain) {
-    const { newRole } = await questions.newItemName('role');
-    const roleCheck = await sqlQueries.queries().checkNewDept(newRole.name);
-    if (!roleCheck) {
-        const { retry } = await questions.alreadyExistsError.onlyRetry('role');
-        if (retry.retryAnswer === 'Retry') {
-            addRole(true);
-        } else viewRoles(true);
-    } else sqlQueries.queries().writeNewRole(newRole.name)
+    const roleName = await inquirerPrompts.newItemName('role');
+    //TODO: Sequelize check to avoid duplicates
+    const linkedDept = await inquirerPrompts.newRole.chooseDept(['Bigwig', 'Bottom Feeder']);
+    const roleSalary = await inquirerPrompts.newRole.chooseSalary();
+    const newRole = {
+        ...roleName,
+        ...linkedDept,
+        ...roleSalary
+    };
+    console.log('');
+    //TODO: Insert list of departments into chooseDept()
+    console.log('Added', newRole.name, 'to Roles, in the', newRole.dept, 'department, and a salary of $' + newRole.salary + '!');
+    console.log('');
+    //TODO: Sequelize writes new data to dept table
+    if (returnToMain) mainMenu();
 }
 
 //-----------------
@@ -174,14 +189,26 @@ async function addRole(returnToMain) {
 //  Potential later addition: Generate random 6-digit empID and show, rather than incremental ID
 
 async function addEmp(returnToMain) {
-    const { newRole } = await questions.newItemName('role');
-    const roleCheck = await sqlQueries.queries().checkNewDept(newRole.name);
-    if (!roleCheck) {
-        const { retry } = await questions.alreadyExistsError.onlyRetry('role');
-        if (retry.retryAnswer === 'Retry') {
-            addRole(true);
-        } else viewRoles(true);
-    } else sqlQueries.queries().writeNewRole(newRole.name)
+    const lastName = await inquirerPrompts.newEmp.lastName();
+    //TODO: Sequelize check to see if it matches an existing employee
+    const firstName = await inquirerPrompts.newEmp.firstName();
+    const assignedDept = await inquirerPrompts.newEmp.assignToDept(['Bigwig', 'Bottom Feeder']);
+    //TODO: Insert list of departments into assignedDept()
+    const assignedRole = await inquirerPrompts.newEmp.assignRole(['CEO', 'Peon']);
+    const assignedManager = await inquirerPrompts.newEmp.assignManager();
+    //TODO: Sequelize check for both manager ID and last name
+    const newEmp = {
+        ...lastName,
+        ...firstName,
+        ...assignedDept,
+        ...assignedRole,
+        ...assignedManager
+    };
+    console.log('');
+    console.log('Added', newEmp.lastName + ',', newEmp.firstName, 'to Employees, in the', newEmp.assignedDept, 'department, with the role of', newEmp.assignedRole + '! Their direct manager is', newEmp.assignedManager + '.');
+    console.log('');
+    //TODO: Sequelize writes new data to dept table
+    if (returnToMain) mainMenu();
 }
 
 //-----------------
@@ -194,7 +221,18 @@ async function addEmp(returnToMain) {
 //  Prompt what to update (Role/Manager/Cancel)
 
 async function updateEmp(returnToMain) {
-    mainMenu()
+    const target = await inquirerPrompts.updateTarget();
+    //TODO: Sequelize check to avoid duplicates
+    const { option } = await inquirerPrompts.updateOptions();
+    
+    switch (option) {
+        case 'Reassign Role': 
+            updateEmpRole(target, returnToMain);
+            break;
+        case 'Change Manager': 
+            updateManager(target, returnToMain);
+            break;
+    }
 }
 
 //-----------------
@@ -205,8 +243,22 @@ async function updateEmp(returnToMain) {
 //  Confirm role name and ID to update to (Retry [GOTO: UPDATE_EMP_ROLE]/Cancel) [TARGET: UPDATE_EMP_CONF]
 //  Prompt what to update (Role/Manager/Cancel)
 
-async function updateEmpRole(empID) {
-    mainMenu()
+async function updateEmpRole(empID, returnToMain) {
+    const reassignedDept = await inquirerPrompts.newEmp.assignToDept(['Bigwig', 'Bottom Feeder']);
+    //TODO: Insert list of departments into reassignedDept()
+    const reassignedRole = await inquirerPrompts.newEmp.assignRole(['CEO', 'Peon']);
+    const updatedEmp = {
+        ...empID,
+        ...reassignedDept,
+        ...reassignedRole
+    };
+
+    console.log('');
+    //TODO: Insert list of departments into chooseDept()
+    console.log('Updated', updatedEmp.name + "'s department and role!");
+    console.log('');
+    //TODO: Sequelize writes new data to dept table
+    if (returnToMain) mainMenu();
 }
 
 //-----------------
@@ -216,8 +268,24 @@ async function updateEmpRole(empID) {
 //  If multiple, prompt with list of employees with this last name (+ Cancel)
 //  Confirm manager name and empID (Retry [GOTO: UPDATE_MANAGER_INPUT]/Cancel) [TARGET: UPDATE_EMP_CONF]
 
-async function updateManager(empID) {
-    mainMenu()
+async function updateManager(empID, returnToMain) {
+    const reassignedManager = await inquirerPrompts.newEmp.assignManager();
+    const updatedEmp = {
+        ...empID,
+        ...reassignedManager
+    };
+
+    console.log('');
+    //TODO: Insert list of departments into chooseDept()
+    console.log('Updated', updatedEmp.name + "'s manager!");
+    console.log('');
+    //TODO: Sequelize writes new data to dept table
+    if (returnToMain) mainMenu();
+};
+
+async function exitMenu() {
+    console.log('');
+    console.log('Goodbye!');
 }
 
 mainMenu();
