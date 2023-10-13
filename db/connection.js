@@ -1,10 +1,8 @@
-const mysql = require('mysql2');
+const { Sequelize } = require('sequelize');
 
-const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'employee_tracker_db'
+const sequelize = new Sequelize('employee_tracker_db', 'root', '', {
+  host: 'localhost',
+  dialect: 'mysql'
 });
 
-module.exports = connection;
+module.exports = sequelize;
