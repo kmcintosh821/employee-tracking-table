@@ -173,12 +173,25 @@ async function viewEmps() {
 //  Potential later addition: Generate random 3-digit deptID and show, rather than incremental IDs
 
 async function addDept(returnToMain) {
-    const newDept= await inquirerPrompts.newItemName('department');
-    console.log('');
-    console.log('Added', newDept.name, 'to Departments!');
-    console.log('');
-    //TODO: Sequelize check to avoid duplicates
-    //TODO: Sequelize writes new data to dept table
+    const newDept = await inquirerPrompts.newItemName('department');
+    const deptCheck = await Department.findOne({ where: { dept_name: newDept.name } });
+
+    if (deptCheck !== null) {
+        const retryPrompt = await inquirerPrompts.alreadyExistsError.onlyRetry('Department');
+        switch (retryPrompt.retryAnswer){
+            case 'Retry':
+                addDept(false)
+                break;
+            case 'Cancel':
+                break;
+        }
+    } else {
+        const addDept = await Department.create({ dept_name: newDept.name })
+        console.log('');
+        console.log('Added', newDept.name, 'to Departments, with an ID of', addDept.id + '!');
+        console.log('');
+    }
+
     if (returnToMain) mainMenu();
 }
 
@@ -194,15 +207,37 @@ async function addDept(returnToMain) {
 //  Potential later addition: Generate random 4-digit roleID and show, rather than incremental IDs
 
 async function addRole(returnToMain) {
+    const deptTable = await Department.findAll();
+    let deptList = [];
+    deptTable.forEach((item) => {
+        let row = JSON.parse(JSON.stringify(item));
+        deptList.push(row.dept_name);
+    })
     const roleName = await inquirerPrompts.newItemName('role');
-    //TODO: Sequelize check to avoid duplicates
-    const linkedDept = await inquirerPrompts.newRole.chooseDept(['Bigwig', 'Bottom Feeder']);
-    const roleSalary = await inquirerPrompts.newRole.chooseSalary();
-    const newRole = {
-        ...roleName,
-        ...linkedDept,
-        ...roleSalary
-    };
+    const roleCheck = await Role.findOne({ where: { job_title: roleName.name } });
+
+    if (roleCheck !== null) {
+        const retryPrompt = await inquirerPrompts.alreadyExistsError.onlyRetry('Role');
+        switch (retryPrompt.retryAnswer){
+            case 'Retry':
+                addRole(false)
+                break;
+            case 'Cancel':
+                break;
+        }
+    } else {
+        const linkedDept = await inquirerPrompts.newRole.chooseDept(deptList);
+        const roleSalary = await inquirerPrompts.newRole.chooseSalary();
+        const newRole = {
+            ...roleName,
+            ...linkedDept,
+            ...roleSalary
+        };
+        const addRole = await Role.create({ job_title: newRole.name, role_dept: linkedDept.dept, roleSalary: roleSalary.salary })
+        console.log('');
+        console.log('Added', newRole.name, 'to Roles, with an ID of', addRole.id + '!');
+        console.log('');
+    }
     console.log('');
     //TODO: Insert list of departments into chooseDept()
     console.log('Added', newRole.name, 'to Roles, in the', newRole.dept, 'department, and a salary of $' + newRole.salary + '!');
