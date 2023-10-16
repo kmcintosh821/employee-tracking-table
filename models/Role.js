@@ -1,6 +1,7 @@
 const { DataTypes, Model } = require('sequelize');
 const db = require('../db/connection');
 const Employee = require('./Employee');
+const Department = require('./Department');
 
 class Role extends Model { }
 
@@ -16,10 +17,7 @@ Role.init({
     },
     role_dept: {
         type: DataTypes.INTEGER,
-        references: {
-            model: Department,
-            key: 'dept_name'
-        }
+        allowNull: false
     },
     salary: {
         type: DataTypes.INTEGER,
@@ -29,8 +27,5 @@ Role.init({
     modelName: 'role',
     sequelize: db
 });
-
-// Department.hasMany(Role);
-// Role.belongsTo(Department);
 
 module.exports = Role;

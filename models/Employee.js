@@ -1,5 +1,7 @@
 const { DataTypes, Model } = require('sequelize');
 const db = require('../db/connection');
+const Role = require('./Role')
+const Department = require('./Department')
 
 class Employee extends Model { }
 
@@ -19,10 +21,7 @@ Employee.init({
     },
     employee_role: {
         type: DataTypes.STRING,
-        references: {
-            model: Role,
-            key: 'job_title'
-        }
+        allowNull: false
     },
     manager_id: {
         type: DataTypes.INTEGER,
@@ -42,8 +41,5 @@ Employee.init({
     modelName: 'employee',
     sequelize: db
 });
-
-Role.hasMany(Employee);
-Employee.belongsTo(Role);
 
 module.exports = Employee;

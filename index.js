@@ -1,7 +1,10 @@
-//Inquirer is required through questions.js
-
+const db = require('./db/connection');
 const inquirerPrompts = require('./questions.js').questions();
 const sqlQueries = require('./sql_queries.js');
+const Employee = require('./models/Employee.js');
+const Role = require('./models/Role.js');
+const Department = require('./models/Department.js')
+
 
 //selectedDepartment object: deptName, deptID properties
 const selectedDepartment = {
@@ -35,6 +38,7 @@ const selectedManager = {
 
 //[MAIN_MENU]       Initial query to start tree: View Depts, Add Dept, View Roles, Add Role, View Emp, Add Emp, Update Emp, Exit
 async function mainMenu() {
+    console.log('')
     let { root } = await inquirerPrompts.menuRoot();
     switch (root) {
         case 'View Departments':
@@ -71,8 +75,19 @@ async function mainMenu() {
 //  Options [ADD_DEPT], [MAIN_MENU]
 
 async function viewDepts() {
-    console.log('Viewing departments.')
-    // TODO: use sequelize to retrieve and display dept table
+    const depts = await Department.findAll();
+    console.log('');
+    console.log('Viewing departments:') 
+    console.log('________________________')
+    console.log('| ID | Department Name')
+    depts.forEach((item) => {
+        let row = JSON.parse(JSON.stringify(item));
+        console.log('|----|------------------')
+        console.log('| ', row.id, '|', row.dept_name);
+    });
+    console.log('|____|__________________')
+    console.log('');
+
     const { deptOptions } = await inquirerPrompts.departmentOptions();
     switch (deptOptions) {
         case 'Add Department':
@@ -91,8 +106,19 @@ async function viewDepts() {
 //  Options [ADD_ROLE], [MAIN_MENU]
 
 async function viewRoles() {
-    console.log('Viewing roles.')
-    // TODO: use sequelize to retrieve and display role table
+    const roles = await Role.findAll();
+    console.log('');
+    console.log('Viewing roles:') 
+    console.log('______________________________________________')
+    console.log('| ID | Title ~~~~~ Department ~~~~~ Salary')
+    roles.forEach((item) => {
+        let row = JSON.parse(JSON.stringify(item));
+        console.log('|----|----------------------------------------')
+        console.log('| ', row.id, '|', row.job_title, '~~~~~', row.role_dept, '~~~~~', row.salary);
+    });
+    console.log('|____|________________________________________')
+    console.log('');
+
     const { roleOptions } = await inquirerPrompts.roleOptions();
     switch (roleOptions) {
         case 'Add Role':
@@ -111,7 +137,19 @@ async function viewRoles() {
 //  Options [ADD_EMP], [UPDATE_EMP], [MAIN_MENU]
 
 async function viewEmps() {
-    // sqlQueries.queries().getTable('employees');
+    const emps = await Employee.findAll();
+    console.log('');
+    console.log('Viewing employees:') 
+    console.log('__________________________________________________________________')
+    console.log('| ID | Name (last, first) ~~~~~ Role ~~~~~ Manager (ID, last name)')
+    emps.forEach((item) => {
+        let row = JSON.parse(JSON.stringify(item));
+        console.log('|----|------------------------------------------------------------')
+        console.log('| ', row.id, '|', row.last_name + ',', row.first_name, '~~~~~', row.employee_role, '~~~~~', row.manager_id, row.manager_name);
+    });
+    console.log('|____|____________________________________________________________')
+    console.log('');
+
     const { empOptions } = await inquirerPrompts.empOptions();
     switch (empOptions) {
         case 'Add Employee':
@@ -288,4 +326,13 @@ async function exitMenu() {
     console.log('Goodbye!');
 }
 
-mainMenu();
+async function appInit() {
+    await db.sync().then(() => {
+        console.log('')
+        console.log('Welcome to the Employee Tracker!')
+    });
+    
+    mainMenu();
+}
+
+appInit()

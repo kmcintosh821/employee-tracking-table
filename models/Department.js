@@ -19,7 +19,4 @@ Department.init({
     sequelize: db
 });
 
-Department.hasMany(Role);
-Role.belongsTo(Department);
-
 module.exports = Department;

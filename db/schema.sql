@@ -26,9 +26,12 @@ CREATE TABLE employees (
 );
 
 INSERT INTO departments (dept_name) VALUES 
-    ("Upper Management");
+    ("Bigwigs");
+INSERT INTO departments (dept_name) VALUES 
+    ("Bottom Feeders");
 
-INSERT INTO roles (job_title, role_dept, salary) VALUES ("CEO", "Upper Management", 1000000);
+INSERT INTO roles (job_title, role_dept, salary) VALUES ("CEO", "Bigwigs", 1000000);
+INSERT INTO roles (job_title, role_dept, salary) VALUES ("Peon", "Bottom Feeders", 62);
 
 INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("Dugnutt", "Bobson", "CEO", 1, "Dugnutt");
 INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("McDichael", "Sleve", "Assistant", 1, "Dugnutt");
