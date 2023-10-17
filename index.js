@@ -148,7 +148,7 @@ async function addDept(returnToMain) {
     const deptCheck = await Department.findOne({ where: { dept_name: newDept.name } });
 
     if (deptCheck !== null) {
-        const retryPrompt = await inquirerPrompts.alreadyExistsError.onlyRetry('Department');
+        const retryPrompt = await inquirerPrompts.alreadyExists.onlyRetry('Department');
         switch (retryPrompt.retryAnswer){
             case 'Retry':
                 addDept(false)
@@ -188,7 +188,7 @@ async function addRole(returnToMain) {
     const roleCheck = await Role.findOne({ where: { job_title: roleName.name } });
 
     if (roleCheck !== null) {
-        const retryPrompt = await inquirerPrompts.alreadyExistsError.onlyRetry('Role');
+        const retryPrompt = await inquirerPrompts.alreadyExists.onlyRetry('Role');
         switch (retryPrompt.retryAnswer){
             case 'Retry':
                 addRole(false)
@@ -248,7 +248,7 @@ async function addEmp(returnToMain) {
             sharedNames.push(`${input.lastName}, ${row.firstName}`);
         });
         sharedNames.push('New', 'Cancel');
-        const updateEmployee = await inquirerPrompts.alreadyExistsError.chooseEmployeeOrMakeNew(input, sharedNames)
+        const updateEmployee = await inquirerPrompts.alreadyExists.chooseEmployeeOrMakeNew(input, sharedNames)
         switch (updateEmployee.chooseOrNew) {
             case 'New':
                 firstName = await inquirerPrompts.newEmp.firstName();
@@ -292,13 +292,20 @@ async function addEmp(returnToMain) {
 
 async function updateEmp(returnToMain, id) {
     let target;
+    let input;
     if (id == 0) {
-        const input = await inquirerPrompts.updateTarget();
-        if (typeof input.identifier == "number") {
-            target = await Employee.findByPk(input.identifier)
-        }
+        input = await inquirerPrompts.updateTarget();
+    } else {
+        input.identifier = id;
     }
-    //TODO: Sequelize check to avoid duplicates
+    if (typeof input.identifier == "number") {
+        target = await Employee.findByPk(input.identifier)
+    } else {
+        const nameList = await Employee.findAll({ where: {lastName: input.identifier}})
+        const selection = alreadyExists.chooseEmployeeOrMakeNew(input.identifier);
+        target = await Employee.findOne({where: {lastName: input.identifier, firstName: selection.chooseOrNew}})
+    }
+    
     const { option } = await inquirerPrompts.updateOptions();
     
     switch (option) {

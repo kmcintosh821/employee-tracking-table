@@ -65,7 +65,7 @@ questions = () => {
         // List of choices to display upon selecting to update an employee
         updateTarget: () => {
             const question = [{
-                name: 'name',
+                name: 'identifier',
                 message: ('Input last name or ID of employee to update.'),
                 type: 'input'
             }];
@@ -164,7 +164,7 @@ questions = () => {
         },
 
         //Error messages
-        alreadyExistsError: {
+        alreadyExists: {
             onlyRetry: (item) => {
                 const question = [{
                     name: ('retryAnswer'),
@@ -197,11 +197,7 @@ questions = () => {
                     name: ('chooseOrNew'),
                     message: `Employees with last name "${name}" exist, are you referring to:`,
                     type: 'list',
-                    choices: [
-                        possibleChoices,
-                        'New',
-                        'Cancel'
-                    ]
+                    choices: possibleChoices
                 }];
                 return inquirer.prompt(question)
             }
