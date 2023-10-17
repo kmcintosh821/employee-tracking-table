@@ -6,35 +6,6 @@ const Role = require('./models/Role.js');
 const Department = require('./models/Department.js')
 
 
-//selectedDepartment object: deptName, deptID properties
-const selectedDepartment = {
-    deptName: 'none',
-    deptID: 0
-};
-//selectedRole object: jobTitle, roleID, deptID, salary
-const selectedRole = {
-    jobTitle: 'none',
-    roleID: 0,
-    deptID: 0,
-    salary: 0
-};
-//selectedEmployee object: lastname, firstname, empID, roleID, deptID, managerID
-const selectedEmployee = {
-    lastName: 'none',
-    firstName: 'none',
-    empID: 0,
-    roleID: 0,
-    deptID: 0,
-    managerID: 0
-}
-
-//selectedManager object: managerID, subordID
-const selectedManager = {
-    managerID: 0,
-    subordID: 0
-}
-
-
 
 //[MAIN_MENU]       Initial query to start tree: View Depts, Add Dept, View Roles, Add Role, View Emp, Add Emp, Update Emp, Exit
 async function mainMenu() {
@@ -60,7 +31,7 @@ async function mainMenu() {
             addEmp(true);
             break;
         case 'Update Employee':
-            updateEmp(true);
+            updateEmp(true, 0);
             break;
         case 'Exit':
             exitMenu();
@@ -228,21 +199,12 @@ async function addRole(returnToMain) {
     } else {
         const linkedDept = await inquirerPrompts.newRole.chooseDept(deptList);
         const roleSalary = await inquirerPrompts.newRole.chooseSalary();
-        const newRole = {
-            ...roleName,
-            ...linkedDept,
-            ...roleSalary
-        };
-        const addRole = await Role.create({ job_title: newRole.name, role_dept: linkedDept.dept, roleSalary: roleSalary.salary })
+
+        const addRole = await Role.create({ job_title: roleName.name, role_dept: linkedDept.dept, salary: roleSalary.salary })
         console.log('');
-        console.log('Added', newRole.name, 'to Roles, with an ID of', addRole.id + '!');
+        console.log('Added', roleName.name, 'to Roles, in the', linkedDept.dept, 'department, and a salary of $' + roleSalary.salary + '!');
         console.log('');
     }
-    console.log('');
-    //TODO: Insert list of departments into chooseDept()
-    console.log('Added', newRole.name, 'to Roles, in the', newRole.dept, 'department, and a salary of $' + newRole.salary + '!');
-    console.log('');
-    //TODO: Sequelize writes new data to dept table
     if (returnToMain) mainMenu();
 }
 
@@ -262,25 +224,60 @@ async function addRole(returnToMain) {
 //  Potential later addition: Generate random 6-digit empID and show, rather than incremental ID
 
 async function addEmp(returnToMain) {
-    const lastName = await inquirerPrompts.newEmp.lastName();
-    //TODO: Sequelize check to see if it matches an existing employee
-    const firstName = await inquirerPrompts.newEmp.firstName();
-    const assignedDept = await inquirerPrompts.newEmp.assignToDept(['Bigwig', 'Bottom Feeder']);
-    //TODO: Insert list of departments into assignedDept()
-    const assignedRole = await inquirerPrompts.newEmp.assignRole(['CEO', 'Peon']);
-    const assignedManager = await inquirerPrompts.newEmp.assignManager();
-    //TODO: Sequelize check for both manager ID and last name
-    const newEmp = {
-        ...lastName,
-        ...firstName,
-        ...assignedDept,
-        ...assignedRole,
-        ...assignedManager
-    };
-    console.log('');
-    console.log('Added', newEmp.lastName + ',', newEmp.firstName, 'to Employees, in the', newEmp.assignedDept, 'department, with the role of', newEmp.assignedRole + '! Their direct manager is', newEmp.assignedManager + '.');
-    console.log('');
-    //TODO: Sequelize writes new data to dept table
+    const deptTable = await Department.findAll();
+    let deptList = [];
+    deptTable.forEach((item) => {
+        let row = JSON.parse(JSON.stringify(item));
+        deptList.push(row.dept_name);
+    });
+    const roleTable = await Role.findAll();
+    let roleList = [];
+    roleTable.forEach((item) => {
+        let row = JSON.parse(JSON.stringify(item));
+        roleList.push(row.job_title);
+    });
+
+    const input = await inquirerPrompts.newEmp.lastName();
+    const lastNameCheckList = await Employee.findAll({ where: { lastName: input.lastName } });
+    let sharedNames, sharedFirstNames = [];
+    let firstName;
+    if (lastNameCheckList.length != 0) {
+        lastNameCheckList.forEach((item) => {
+            let row = JSON.parse(JSON.stringify(item));
+            sharedIds.push(row.id);
+            sharedNames.push(`${input.lastName}, ${row.firstName}`);
+        });
+        sharedNames.push('New', 'Cancel');
+        const updateEmployee = await inquirerPrompts.alreadyExistsError.chooseEmployeeOrMakeNew(input, sharedNames)
+        switch (updateEmployee.chooseOrNew) {
+            case 'New':
+                firstName = await inquirerPrompts.newEmp.firstName();
+                const assignedDept = await inquirerPrompts.newEmp.assignToDept(['Bigwig', 'Bottom Feeder']);
+                //TODO: Insert list of departments into assignedDept()
+                const assignedRole = await inquirerPrompts.newEmp.assignRole(['CEO', 'Peon']);
+                const assignedManager = await inquirerPrompts.newEmp.assignManager();
+                //TODO: Sequelize check for both manager ID and last name
+                const newEmp = {
+                    ...lastName,
+                    ...firstName,
+                    ...assignedDept,
+                    ...assignedRole,
+                    ...assignedManager
+                };
+                console.log('');
+                console.log('Added', newEmp.lastName + ',', newEmp.firstName, 'to Employees, in the', newEmp.assignedDept, 'department, with the role of', newEmp.assignedRole + '! Their direct manager is', newEmp.assignedManager + '.');
+                console.log('');                
+                break;
+            case 'Cancel':
+                break;
+            default: 
+                const nameIndex = sharedNames.indexOf(updateEmployee.chooseOrNew)
+                const target = sharedIds[nameIndex]
+                updateEmp(returnToMain, target)
+                break;
+        } 
+    }       
+    
     if (returnToMain) mainMenu();
 }
 
@@ -293,8 +290,14 @@ async function addEmp(returnToMain) {
 //  Confirm employee name and empID (Retry [GOTO: UPDATE_EMP_INPUT]/Cancel) [TARGET: UPDATE_EMP_CONF]
 //  Prompt what to update (Role/Manager/Cancel)
 
-async function updateEmp(returnToMain) {
-    const target = await inquirerPrompts.updateTarget();
+async function updateEmp(returnToMain, id) {
+    let target;
+    if (id == 0) {
+        const input = await inquirerPrompts.updateTarget();
+        if (typeof input.identifier == "number") {
+            target = await Employee.findByPk(input.identifier)
+        }
+    }
     //TODO: Sequelize check to avoid duplicates
     const { option } = await inquirerPrompts.updateOptions();
     
