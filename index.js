@@ -291,19 +291,34 @@ async function addEmp(returnToMain) {
 //  Prompt what to update (Role/Manager/Cancel)
 
 async function updateEmp(returnToMain, id) {
-    let target;
+    let targetId;
     let input;
+    let breakPoint;
     if (id == 0) {
         input = await inquirerPrompts.updateTarget();
+        if (typeof input.identifier == "number") {
+            targetId = input.identifier
+        } else {
+            let idList = [];
+            let nameList = [];
+            const nameTable = await Employee.findAll({ where: {lastName: input.identifier}});
+
+            if (nameTable.length != 0) {
+                nameTable.forEach((item) => {
+                    let row = JSON.parse(JSON.stringify(item));
+                    idList.push(row.id);
+                    nameList.push(`${input.lastName}, ${row.firstName}`);
+                });
+            } else {
+                console.log ('Sorry, no employee by that name seems to exist.')
+                return;
+            }
+            const selection = alreadyExists.chooseEmployeeOrMakeNew(nameList);
+            const nameIndex = nameList.indexOf(selection.chooseOrNew)
+            targetId = idList[nameIndex]
+            }
     } else {
-        input.identifier = id;
-    }
-    if (typeof input.identifier == "number") {
-        target = await Employee.findByPk(input.identifier)
-    } else {
-        const nameList = await Employee.findAll({ where: {lastName: input.identifier}})
-        const selection = alreadyExists.chooseEmployeeOrMakeNew(input.identifier);
-        target = await Employee.findOne({where: {lastName: input.identifier, firstName: selection.chooseOrNew}})
+        targetId = id;
     }
     
     const { option } = await inquirerPrompts.updateOptions();
