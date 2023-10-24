@@ -26,12 +26,23 @@ CREATE TABLE employees (
 );
 
 INSERT INTO departments (dept_name) VALUES 
-    ("Bigwigs");
+    ("Upper Management");
 INSERT INTO departments (dept_name) VALUES 
-    ("Bottom Feeders");
+    ("Middle Management");
+INSERT INTO departments (dept_name) VALUES 
+    ("Basic Employment");
 
-INSERT INTO roles (job_title, role_dept, salary) VALUES ("CEO", "Bigwigs", 1000000);
-INSERT INTO roles (job_title, role_dept, salary) VALUES ("Peon", "Bottom Feeders", 62);
+INSERT INTO roles (job_title, role_dept, salary) VALUES ("CEO", "Upper Management", 1000000);
+INSERT INTO roles (job_title, role_dept, salary) VALUES ("Director", "Upper Management", 1000000);
+INSERT INTO roles (job_title, role_dept, salary) VALUES ("Assistant", "Middle Management", 500000);
+INSERT INTO roles (job_title, role_dept, salary) VALUES ("Store Manager", "Middle Management", 500000);
+INSERT INTO roles (job_title, role_dept, salary) VALUES ("Clerk", "Basic Employment", 20000);
+INSERT INTO roles (job_title, role_dept, salary) VALUES ("Host", "Basic Employment", 20000);
 
-INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("Dugnutt", "Bobson", "CEO", 1, "Dugnutt");
-INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("McDichael", "Sleve", "Assistant", 1, "Dugnutt");
+
+INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("Dugnutt", "Bobson", "CEO", 0, "N/A");
+INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("McDichael", "Sleve", "Director", 0, "Dugnutt");
+INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("Sweemey", "Onson", "Assistant", 1, "Dugnutt");
+INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("Nogilny", "Kevin", "Store Manager", 2, "McDichael");
+INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("Dandleton", "Karl", "Clerk", 3, "Sweemey");
+INSERT INTO employees (last_name, first_name, employee_role, manager_id, manager_name) VALUES ("Gride", "Jeromy", "Host", 4, "Nogilny");

@@ -127,7 +127,8 @@ async function viewEmps() {
             addEmp(true);
             break;
         case 'Update Employee':
-            updateEmp(true);
+
+            updateEmp(true, 0);
             break;
         default:
             mainMenu();
@@ -224,39 +225,28 @@ async function addRole(returnToMain) {
 //  Potential later addition: Generate random 6-digit empID and show, rather than incremental ID
 
 async function addEmp(returnToMain) {
-    const deptTable = await Department.findAll();
-    let deptList = [];
-    deptTable.forEach((item) => {
-        let row = JSON.parse(JSON.stringify(item));
-        deptList.push(row.dept_name);
-    });
-    const roleTable = await Role.findAll();
-    let roleList = [];
-    roleTable.forEach((item) => {
-        let row = JSON.parse(JSON.stringify(item));
-        roleList.push(row.job_title);
-    });
-
     const input = await inquirerPrompts.newEmp.lastName();
-    const lastNameCheckList = await Employee.findAll({ where: { lastName: input.lastName } });
-    let sharedNames, sharedFirstNames = [];
-    let firstName;
+    const lastNameCheckList = await Employee.findAll({ where: { last_name: input.lastName } });
+    let sharedIds = [];
+    let sharedNames = [];
     if (lastNameCheckList.length != 0) {
         lastNameCheckList.forEach((item) => {
             let row = JSON.parse(JSON.stringify(item));
             sharedIds.push(row.id);
-            sharedNames.push(`${input.lastName}, ${row.firstName}`);
+            sharedNames.push(`${row.last_name}, ${row.first_name}`);
         });
         sharedNames.push('New', 'Cancel');
-        const updateEmployee = await inquirerPrompts.alreadyExists.chooseEmployeeOrMakeNew(input, sharedNames)
+        const updateEmployee = await inquirerPrompts.alreadyExists.chooseEmployeeOrMakeNew(input.lastName, sharedNames)
         switch (updateEmployee.chooseOrNew) {
             case 'New':
-                firstName = await inquirerPrompts.newEmp.firstName();
-                const assignedDept = await inquirerPrompts.newEmp.assignToDept(['Bigwig', 'Bottom Feeder']);
-                //TODO: Insert list of departments into assignedDept()
-                const assignedRole = await inquirerPrompts.newEmp.assignRole(['CEO', 'Peon']);
-                const assignedManager = await inquirerPrompts.newEmp.assignManager();
-                //TODO: Sequelize check for both manager ID and last name
+                let firstName = await inquirerPrompts.newEmp.firstName();
+                let assignedDept = await deptAssign();
+                let assignedRole = await roleAssign(assignedDept);
+                let assignedManager = await managerAssign();
+                if (assignedManager == null) {
+                    assignedManager = {id: 0, last_name: 'N/A'}
+                }
+                
                 const newEmp = {
                     ...lastName,
                     ...firstName,
@@ -265,20 +255,106 @@ async function addEmp(returnToMain) {
                     ...assignedManager
                 };
                 console.log('');
-                console.log('Added', newEmp.lastName + ',', newEmp.firstName, 'to Employees, in the', newEmp.assignedDept, 'department, with the role of', newEmp.assignedRole + '! Their direct manager is', newEmp.assignedManager + '.');
-                console.log('');                
+                console.log('Added', newEmp.lastName + ',', newEmp.firstName, 'to Employees, in the', newEmp.assignedDept, 'department, with the role of', newEmp.assignedRole + '! Their direct manager is', assignedManager.last_name + '.');
+                console.log('');                       
                 break;
             case 'Cancel':
+                console.log('~~ Returning to main menu from addEmp "Cancel" button!')
+                if (returnToMain) mainMenu();
                 break;
             default: 
+                console.log('~~ addEmp switch case default condition hit!')
                 const nameIndex = sharedNames.indexOf(updateEmployee.chooseOrNew)
                 const target = sharedIds[nameIndex]
-                updateEmp(returnToMain, target)
+                updateEmp(returnToMain, target)       
                 break;
         } 
-    }       
-    
-    if (returnToMain) mainMenu();
+    } else {
+        let firstName = await inquirerPrompts.newEmp.firstName();
+        let assignedDept = await deptAssign();
+        let assignedRole = await roleAssign(assignedDept.assignedDept);
+        let assignedManager = await managerAssign();
+        if (assignedManager == null) {
+            assignedManager = {id: 0, last_name: 'N/A'}
+        }
+        
+        const newEmp = {
+            ...input.lastName,
+            ...firstName,
+            ...assignedDept,
+            ...assignedRole,
+            ...assignedManager
+        };
+
+        const addEmployee = await Employee.create({ last_name: input.lastName, first_name: newEmp.firstName, employee_role: newEmp.assignedRole, manager_id: assignedManager.id })
+        
+        console.log('');
+        console.log('Added', input.lastName + ',', newEmp.firstName, 'to Employees, in the', newEmp.assignedDept, 'department, with the role of', newEmp.assignedRole + '! Their direct manager is', assignedManager.last_name + '.');
+        console.log('');           
+
+        if (returnToMain) mainMenu();
+    }
+}
+
+//-----------------
+
+//Assignment sub-functions
+
+async function deptAssign() {
+    const deptTable = await Department.findAll();
+    let deptList = [];
+    deptTable.forEach((item) => {
+        let row = JSON.parse(JSON.stringify(item));
+        deptList.push(row.dept_name);
+    });
+    const assignedDept = await inquirerPrompts.newEmp.assignToDept(deptList);
+    return assignedDept;
+}
+
+async function roleAssign(dept) {
+    const roleTable = await Role.findAll({ where: {role_dept: dept}});
+    let roleList = [];
+    roleTable.forEach((item) => {
+        let row = JSON.parse(JSON.stringify(item));
+        roleList.push(row.job_title);
+    });
+    roleList.push('None')
+    const assignedRole = await inquirerPrompts.newEmp.assignRole(roleList);
+    return assignedRole;
+}
+
+async function managerAssign() {
+    let assignedManager;
+    const input = await inquirerPrompts.newEmp.assignManager();
+    if (!input.identifier)
+        targetId = null;
+    else if (typeof input.identifier == "number") {
+        targetId = input.identifier
+    } else {
+        let idList = [];
+        let nameList = [];
+        const nameTable = await Employee.findAll({ where: {last_name: input.identifier}});
+
+        if (nameTable.length == 0) {
+            console.log ('Sorry, no employee by that name seems to exist.')
+            targetId = null;
+        } else {
+            nameTable.forEach((item) => {
+                let row = JSON.parse(JSON.stringify(item));
+                idList.push(row.id);
+                nameList.push(`${input.lastName}, ${row.firstName}`);
+            });
+            const selection = alreadyExists.chooseEmployeeOrMakeNew(nameList);
+            const nameIndex = nameList.indexOf(selection.chooseOrNew)
+            targetId = idList[nameIndex]
+        }
+    }
+    if (targetId !== null) {
+        const managerJSON = await Employee.findOne({ where: {id: targetId}});
+        assignedManager = JSON.parse(JSON.stringify(managerJSON));
+        console.log(assignedManager)
+    } else assignedManager = {id: 0, last_name: 'N/A'}
+    return assignedManager;
 }
 
 //-----------------
@@ -291,9 +367,10 @@ async function addEmp(returnToMain) {
 //  Prompt what to update (Role/Manager/Cancel)
 
 async function updateEmp(returnToMain, id) {
+    console.log('~~ updateEmp passed the beginning flag!')
     let targetId;
     let input;
-    let breakPoint;
+    let selection;
     if (id == 0) {
         input = await inquirerPrompts.updateTarget();
         if (typeof input.identifier == "number") {
@@ -301,36 +378,101 @@ async function updateEmp(returnToMain, id) {
         } else {
             let idList = [];
             let nameList = [];
-            const nameTable = await Employee.findAll({ where: {lastName: input.identifier}});
+            const nameTable = await Employee.findAll({ where: {last_name: input.identifier}});
 
-            if (nameTable.length != 0) {
+            if (nameTable.length > 0) {
                 nameTable.forEach((item) => {
                     let row = JSON.parse(JSON.stringify(item));
                     idList.push(row.id);
-                    nameList.push(`${input.lastName}, ${row.firstName}`);
+                    nameList.push(`${row.last_name}, ${row.first_name}`);
                 });
             } else {
                 console.log ('Sorry, no employee by that name seems to exist.')
                 return;
             }
-            const selection = alreadyExists.chooseEmployeeOrMakeNew(nameList);
+            selection = await inquirerPrompts.alreadyExists.chooseEmployeeOrMakeNew(input.identifier, nameList);
             const nameIndex = nameList.indexOf(selection.chooseOrNew)
             targetId = idList[nameIndex]
             }
+            console.log('~~ updateEmp passed the true condition flag!')
     } else {
         targetId = id;
+        
+        console.log('~~ updateEmp passed the false condition flag!')
     }
     
-    const { option } = await inquirerPrompts.updateOptions();
+    // const { updateOptions } = await inquirerPrompts.updateOptions();
     
-    switch (option) {
-        case 'Reassign Role': 
-            updateEmpRole(target, returnToMain);
-            break;
-        case 'Change Manager': 
-            updateManager(target, returnToMain);
-            break;
-    }
+    // switch (updateOptions.option) {
+    //     case 'Reassign Role': 
+            console.log('~~ updateEmp passed the Department Update flag!')
+            const deptTable = await Department.findAll();
+            let deptList = [];
+            deptTable.forEach((item) => {
+                let row = JSON.parse(JSON.stringify(item));
+                deptList.push(row.dept_name);
+            });
+            const dept = await inquirerPrompts.newEmp.assignToDept(deptList);
+            
+            console.log('~~ updateEmp passed the Department Prompt flag!')
+            console.log(dept)
+            const roleTable = await Role.findAll({ where: {role_dept: dept.assignedDept}});
+            
+            console.log('~~ updateEmp passed the Role Table flag!')
+            let roleList = [];
+            roleTable.forEach((item) => {
+                let row = JSON.parse(JSON.stringify(item));
+                roleList.push(row.job_title);
+            });
+            const role = await inquirerPrompts.newEmp.assignRole(roleList);
+            const updatedEmployeeRole = await Employee.update({employee_role: role.assignedRole}, {where: {id: targetId}});
+
+            console.log('');
+            console.log('Updated', selection.chooseOrNew + "'s department and role!");
+            console.log('');
+            // break;
+
+        // case 'Change Manager': 
+            console.log('~~ updateEmp passed the Manager Update flag!')
+            let assignedManager;
+            const managerInput = await inquirerPrompts.newEmp.assignManager();
+            if (typeof managerInput.identifier == "number") {
+                targetId = managerInput.identifier
+            } else {
+                let manIdList = [];
+                let manNameList = [];
+                const nameTable = await Employee.findAll({ where: {last_name: managerInput.identifier}});
+        
+                if (nameTable.length == 0) {
+                    console.log ('Sorry, no employee by that name seems to exist.')
+                    targetId = null;
+                } else {
+                    nameTable.forEach((item) => {
+                        let row = JSON.parse(JSON.stringify(item));
+                        manIdList.push(row.id);
+                        manNameList.push(`${row.last_name}, ${row.first_name}`);
+                    });
+                    const selection = await inquirerPrompts.alreadyExists.chooseEmployeeOrMakeNew(managerInput.identifier, manNameList);
+                    const manNameIndex = manNameList.indexOf(selection.chooseOrNew)
+                    targetId = manIdList[manNameIndex]
+                }
+            }
+            if (targetId !== null) {
+                const managerJSON = await Employee.findOne({ where: {id: targetId}});
+                assignedManager = JSON.parse(JSON.stringify(managerJSON));
+            }
+
+            const updatedEmployeeManager = await Employee.update({ manager: assignedManager.last_name}, {where: {id: targetId}})
+
+            console.log('');
+            console.log('Updated', selection.chooseOrNew + "'s manager!");
+            console.log('');
+            
+    // }
+    
+    console.log('~~ updateEmp passed the end flag!')
+    if (returnToMain) mainMenu();
+
 }
 
 //-----------------
@@ -342,9 +484,8 @@ async function updateEmp(returnToMain, id) {
 //  Prompt what to update (Role/Manager/Cancel)
 
 async function updateEmpRole(empID, returnToMain) {
-    const reassignedDept = await inquirerPrompts.newEmp.assignToDept(['Bigwig', 'Bottom Feeder']);
-    //TODO: Insert list of departments into reassignedDept()
-    const reassignedRole = await inquirerPrompts.newEmp.assignRole(['CEO', 'Peon']);
+    const reassignedDept = deptAssign();
+    const reassignedRole = roleAssign(reassignedDept);
     const updatedEmp = {
         ...empID,
         ...reassignedDept,
@@ -352,10 +493,8 @@ async function updateEmpRole(empID, returnToMain) {
     };
 
     console.log('');
-    //TODO: Insert list of departments into chooseDept()
     console.log('Updated', updatedEmp.name + "'s department and role!");
     console.log('');
-    //TODO: Sequelize writes new data to dept table
     if (returnToMain) mainMenu();
 }
 
@@ -374,7 +513,6 @@ async function updateManager(empID, returnToMain) {
     };
 
     console.log('');
-    //TODO: Insert list of departments into chooseDept()
     console.log('Updated', updatedEmp.name + "'s manager!");
     console.log('');
     //TODO: Sequelize writes new data to dept table

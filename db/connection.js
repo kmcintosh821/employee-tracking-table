@@ -5,7 +5,8 @@ const sequelize = new Sequelize('employee_tracker_db', 'root', '', {
     dialect: 'mysql',
     define: {
         timestamps: false
-    }
+    },
+    logging: false
 });
 
 module.exports = sequelize;

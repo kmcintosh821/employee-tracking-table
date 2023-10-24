@@ -66,7 +66,7 @@ questions = () => {
         updateTarget: () => {
             const question = [{
                 name: 'identifier',
-                message: ('Input last name or ID of employee to update.'),
+                message: 'Input last name of employee to update.',
                 type: 'input'
             }];
             return inquirer.prompt(question);
@@ -75,7 +75,7 @@ questions = () => {
         // List of choices to display upon selecting to update an employee and affirming name
         updateOptions: () => {
             const question = [{
-                name: 'updateOptions',
+                name: 'option',
                 message: 'What is getting updated?',
                 type: 'list',
                 choices: [
@@ -155,8 +155,8 @@ questions = () => {
             },
             assignManager: () => {
                 const question = [{
-                    name: 'assignedManager',
-                    message: "Input last name or employee ID of this employee's direct manager.",
+                    name: 'identifier',
+                    message: "Input last name of this employee's direct manager.",
                     type: 'input'
                 }];
                 return inquirer.prompt(question);
@@ -192,10 +192,10 @@ questions = () => {
                 return inquirer.prompt(question);
             },
 
-            chooseEmployeeOrMakeNew: (name, possibleChoices) => {
+            chooseEmployeeOrMakeNew: (input, possibleChoices) => {
                 const question = [{
                     name: ('chooseOrNew'),
-                    message: `Employees with last name "${name}" exist, are you referring to:`,
+                    message: `Employees with last name "${input}" exist, are you referring to:`,
                     type: 'list',
                     choices: possibleChoices
                 }];

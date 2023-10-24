@@ -28,14 +28,16 @@ Employee.init({
         references: {
             model: Employee,
             key: 'id'
-        }
+        },
+        defaultValue: 0
     },
     manager_name: {
         type: DataTypes.STRING,
         references: {
             model: Employee,
             key: 'last_name'
-        }
+        },
+        defaultValue: 'N/A'
     }
 }, {
     modelName: 'employee',
