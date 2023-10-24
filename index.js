@@ -259,11 +259,9 @@ async function addEmp(returnToMain) {
                 console.log('');                       
                 break;
             case 'Cancel':
-                console.log('~~ Returning to main menu from addEmp "Cancel" button!')
                 if (returnToMain) mainMenu();
                 break;
             default: 
-                console.log('~~ addEmp switch case default condition hit!')
                 const nameIndex = sharedNames.indexOf(updateEmployee.chooseOrNew)
                 const target = sharedIds[nameIndex]
                 updateEmp(returnToMain, target)       
@@ -344,7 +342,7 @@ async function managerAssign() {
                 idList.push(row.id);
                 nameList.push(`${input.lastName}, ${row.firstName}`);
             });
-            const selection = alreadyExists.chooseEmployeeOrMakeNew(nameList);
+            const selection = await inquirerPrompts.alreadyExists.chooseEmployeeOrMakeNew(nameList);
             const nameIndex = nameList.indexOf(selection.chooseOrNew)
             targetId = idList[nameIndex]
         }
@@ -352,7 +350,6 @@ async function managerAssign() {
     if (targetId !== null) {
         const managerJSON = await Employee.findOne({ where: {id: targetId}});
         assignedManager = JSON.parse(JSON.stringify(managerJSON));
-        console.log(assignedManager)
     } else assignedManager = {id: 0, last_name: 'N/A'}
     return assignedManager;
 }
@@ -367,7 +364,6 @@ async function managerAssign() {
 //  Prompt what to update (Role/Manager/Cancel)
 
 async function updateEmp(returnToMain, id) {
-    console.log('~~ updateEmp passed the beginning flag!')
     let targetId;
     let input;
     let selection;
@@ -394,18 +390,15 @@ async function updateEmp(returnToMain, id) {
             const nameIndex = nameList.indexOf(selection.chooseOrNew)
             targetId = idList[nameIndex]
             }
-            console.log('~~ updateEmp passed the true condition flag!')
     } else {
         targetId = id;
         
-        console.log('~~ updateEmp passed the false condition flag!')
     }
     
     // const { updateOptions } = await inquirerPrompts.updateOptions();
     
     // switch (updateOptions.option) {
     //     case 'Reassign Role': 
-            console.log('~~ updateEmp passed the Department Update flag!')
             const deptTable = await Department.findAll();
             let deptList = [];
             deptTable.forEach((item) => {
@@ -414,11 +407,8 @@ async function updateEmp(returnToMain, id) {
             });
             const dept = await inquirerPrompts.newEmp.assignToDept(deptList);
             
-            console.log('~~ updateEmp passed the Department Prompt flag!')
-            console.log(dept)
             const roleTable = await Role.findAll({ where: {role_dept: dept.assignedDept}});
             
-            console.log('~~ updateEmp passed the Role Table flag!')
             let roleList = [];
             roleTable.forEach((item) => {
                 let row = JSON.parse(JSON.stringify(item));
@@ -433,7 +423,6 @@ async function updateEmp(returnToMain, id) {
             // break;
 
         // case 'Change Manager': 
-            console.log('~~ updateEmp passed the Manager Update flag!')
             let assignedManager;
             const managerInput = await inquirerPrompts.newEmp.assignManager();
             if (typeof managerInput.identifier == "number") {
@@ -470,7 +459,6 @@ async function updateEmp(returnToMain, id) {
             
     // }
     
-    console.log('~~ updateEmp passed the end flag!')
     if (returnToMain) mainMenu();
 
 }
